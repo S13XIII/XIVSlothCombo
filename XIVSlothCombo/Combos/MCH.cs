@@ -75,6 +75,38 @@ namespace XIVSlothComboPlugin.Combos
         }
     }
 
+    internal class MachinistCombo : CustomCombo
+    {
+        protected internal override CustomComboPreset Preset { get; } = CustomComboPreset.MachinistCombo;
+
+        protected override uint Invoke(uint actionID, uint lastComboMove, float comboTime, byte level)
+        {
+            if (actionID == MCH.SplitShot || actionID == MCH.HeatedSplitShot)
+            {
+                var gaussCD = GetCooldown(MCH.GaussRound);
+                var ricochetCD = GetCooldown(MCH.Ricochet);
+
+                if (level >= MCH.Levels.Ricochet && HasCharges(MCH.Ricochet) && GetCooldown(MCH.CleanShot).CooldownRemaining > 0.6) //0.6 instead of 0.7 to more easily fit opener. a
+                    return MCH.Ricochet;
+
+                if (level >= MCH.Levels.GaussRound && HasCharges(MCH.GaussRound) && GetCooldown(MCH.CleanShot).CooldownRemaining > 0.6)
+                    return MCH.GaussRound;
+
+                if (comboTime > 0)
+                {
+                    if (lastComboMove == MCH.SplitShot && level >= MCH.Levels.SlugShot)
+                        return OriginalHook(MCH.SlugShot);
+
+                    if (lastComboMove == MCH.SlugShot && level >= MCH.Levels.CleanShot)
+                        return OriginalHook(MCH.CleanShot);
+                }
+
+                return OriginalHook(MCH.SplitShot);
+            }
+            return actionID;
+        }
+    }
+
     internal class MachinistMainCombo : CustomCombo
     {
         protected internal override CustomComboPreset Preset { get; } = CustomComboPreset.MachinistMainCombo;
@@ -442,11 +474,11 @@ namespace XIVSlothComboPlugin.Combos
                 }
 
                 if (canWeaveNormal && gauge.Heat >= 50 && openerFinished && IsOffCooldown(MCH.Wildfire) && level >= MCH.Levels.Wildfire &&
-                        IsEnabled(CustomComboPreset.MachinistSimpleWildCharge))
+                    IsEnabled(CustomComboPreset.MachinistSimpleWildCharge))
                 {
-                    if (CombatEngageDuration().Minutes == 0 && GetRemainingCharges(MCH.Reassemble) == 0 && CanDelayedWeave(actionID) ) return MCH.Wildfire;
-                    else if (CombatEngageDuration().Minutes > 0 && (GetCooldownRemainingTime(MCH.ChainSaw) > 50 || level < MCH.Levels.ChainSaw) ) return MCH.Wildfire;
-                }     
+                    if (CombatEngageDuration().Minutes == 0 && GetRemainingCharges(MCH.Reassemble) == 0 && CanDelayedWeave(actionID)) return MCH.Wildfire;
+                    else if (CombatEngageDuration().Minutes > 0 && (GetCooldownRemainingTime(MCH.Drill) > 5 || level < MCH.Levels.ChainSaw)) return MCH.Wildfire;
+                }
 
                 if (gauge.IsOverheated && level >= MCH.Levels.HeatBlast)
                 {
